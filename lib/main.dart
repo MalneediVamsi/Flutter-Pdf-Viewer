@@ -155,7 +155,7 @@ class _PDFScreenState extends State<PDFScreen> {
                         swipeHorizontal: true,
                         autoSpacing: true,
                         pageFling: true,
-                        defaultPage: 8,
+                        defaultPage: 1,
                         pageSnap: true,
                         backgroundColor: bgcolors.BLACK,
                         onRender: (_pages) {
@@ -231,7 +231,7 @@ class _PDFScreenState extends State<PDFScreen> {
               swipeHorizontal: true,
               autoSpacing: false,
               pageFling: true,
-              defaultPage: 0,
+              defaultPage: 1,
               pageSnap: true,
               backgroundColor: bgcolors.BLACK,
               onRender: (_pages) {
