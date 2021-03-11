@@ -93,6 +93,7 @@ class _MyAppState extends State<MyApp> {
 
 class PDFScreen extends StatefulWidget {
   final String path;
+
   PDFScreen({Key key, this.path}) : super(key: key);
 
   _PDFScreenState createState() => _PDFScreenState();
@@ -107,175 +108,188 @@ class _PDFScreenState extends State<PDFScreen> {
   double scale = 1.0;
   double top = 10.0;
   double initialLocalFocalPoint;
+
   @override
   Widget build(BuildContext context) {
     return OrientationBuilder(
         builder: (BuildContext context, Orientation orientation) {
-          if (orientation == Orientation.portrait) {
-            final Completer<PDFViewController> _controller =
+      if (orientation == Orientation.portrait) {
+        final Completer<PDFViewController> _controller =
             Completer<PDFViewController>();
-            return Scaffold(
-              appBar: AppBar(
-                title: Text("Document"),
-                actions: <Widget>[
-                  IconButton(
-                    icon: Icon(Icons.share),
-                    onPressed: () {},
-                  ),
-                ],
+        return Scaffold(
+          appBar: AppBar(
+            title: Text("Document"),
+            actions: <Widget>[
+              IconButton(
+                icon: Icon(Icons.share),
+                onPressed: () {},
               ),
-              body: Stack(
-                children: <Widget>[
-                  Container(
-                    color: Colors.black,
-                    child: PDFView(
-                        key: pdfKey,
-                        filePath: widget.path,
-                        fitEachPage: true,
-                        fitPolicy: FitPolicy.BOTH,
-                        dualPageMode: false,
-                        enableSwipe: true,
-                        swipeHorizontal: true,
-                        autoSpacing: true,
-                        pageFling: true,
-                        defaultPage: 0,
-                        pageSnap: true,
-                        backgroundColor: bgcolors.BLACK,
-                        onRender: (_pages) {
-                          print("OK RENDERED!!!!!");
-                          setState(() {
-                            pages = _pages;
-                            isReady = true;
-                          });
-                        },
-                        onError: (error) {
-                          setState(() {
-                            errorMessage = error.toString();
-                          });
-                          print(error.toString());
-                        },
-                        onPageError: (page, error) {
-                          setState(() {
-                            errorMessage = '$page: ${error.toString()}';
-                          });
-                          print('$page: ${error.toString()}');
-                        },
-                        onViewCreated: (PDFViewController pdfViewController) {
-                          _controller.complete(pdfViewController);
-                        },
-                        onPageChanged: (int page, int total) {
-                          print('page change: $page/$total');
-                        },
-                        onZoomChanged: (double zoom) {
-                          print("Zoom is now $zoom");
-                        }),
-                  ),
-                  errorMessage.isEmpty
-                      ? !isReady
-                      ? Center(
-                    child: CircularProgressIndicator(),
-                  )
-                      : Container()
-                      : Center(child: Text(errorMessage))
-                ],
-              ),
-              bottomNavigationBar:  Container(
+            ],
+          ),
+          body: Stack(
+            children: <Widget>[
+              Container(
                 color: Colors.black,
-                padding: EdgeInsets.all(5.0),
+                child: PDFView(
+                    key: pdfKey,
+                    filePath: widget.path,
+                    fitEachPage: true,
+                    fitPolicy: FitPolicy.BOTH,
+                    dualPageMode: false,
+                    enableSwipe: true,
+                    swipeHorizontal: true,
+                    autoSpacing: true,
+                    pageFling: true,
+                    defaultPage: 0,
+                    pageSnap: true,
+                    backgroundColor: bgcolors.BLACK,
+                    onRender: (_pages) {
+                      print("OK RENDERED!!!!!");
+                      setState(() {
+                        pages = _pages;
+                        isReady = true;
+                      });
+                    },
+                    onError: (error) {
+                      setState(() {
+                        errorMessage = error.toString();
+                      });
+                      print(error.toString());
+                    },
+                    onPageError: (page, error) {
+                      setState(() {
+                        errorMessage = '$page: ${error.toString()}';
+                      });
+                      print('$page: ${error.toString()}');
+                    },
+                    onViewCreated: (PDFViewController pdfViewController) {
+                      _controller.complete(pdfViewController);
+                    },
+                    onPageChanged: (int page, int total) {
+                      print('page change: $page/$total');
+                    },
+                    onZoomChanged: (double zoom) {
+                      print("Zoom is now $zoom");
+                    }),
+              ),
+              errorMessage.isEmpty
+                  ? !isReady
+                      ? Center(
+                          child: CircularProgressIndicator(),
+                        )
+                      : Container()
+                  : Center(child: Text(errorMessage))
+            ],
+          ),
+          bottomNavigationBar: FutureBuilder<PDFViewController>(
+              future: _controller.future,
+              builder: (context, AsyncSnapshot<PDFViewController> snapshot) {
+                return Container(
+                  color: Colors.black,
+                  padding: EdgeInsets.all(5.0),
                   height: 100,
                   child: PdfDocumentLoader(
-                    assetName: 'assets/demo.pdf',
-                    documentBuilder: (context, pdfDocument, pageCount) =>
-                        LayoutBuilder(
-                            builder: (context, constraints) =>
-                                ListView.builder(
-                                  scrollDirection: Axis.horizontal,
-                                  itemCount: pageCount,
-                                  itemBuilder: (context, index) =>
-                                      GestureDetector(
-                                        onTap: (){
-
+                      assetName: 'assets/demo.pdf',
+                      documentBuilder: (context, pdfDocument, pageCount) =>
+                          LayoutBuilder(
+                              builder: (context, constraints) =>
+                                  ListView.builder(
+                                    scrollDirection: Axis.horizontal,
+                                    itemCount: pageCount,
+                                    itemBuilder: (context, index) {
+                                      return GestureDetector(
+                                        onTap: () async {
+                                          await snapshot.data.setPage(index);
+                                          await snapshot.data.resetZoom(1);
                                         },
                                         child: Container(
-                                            width: 50,
-                                            margin: EdgeInsets.all(5),
-                                            padding: EdgeInsets.all(0),
-                                            color: Colors.black12,
-                                            child: PdfPageView(
-                                              pdfDocument: pdfDocument,
-                                              pageNumber: index + 1,
-                                            ),
+                                          width: 50,
+                                          margin: EdgeInsets.all(5),
+                                          padding: EdgeInsets.all(0),
+                                          color: Colors.black12,
+                                          child: PdfPageView(
+                                            pdfDocument: pdfDocument,
+                                            pageNumber: index + 1,
+                                          ),
                                         ),
-                                      ),
-                                )
-                        ),
-                  )
-              ),
-              floatingActionButton: FutureBuilder<PDFViewController>(
-                future: _controller.future,
-                builder: (context, AsyncSnapshot<PDFViewController> snapshot) {
-                  if (snapshot.hasData) {
-                    return FloatingActionButton.extended(
-                      label: Text("Go to ${pages ~/ 2}"),
-                      onPressed: () async {
-                        //print(await snapshot.data.getZoom());
-                        //print(await snapshot.data.getPageWidth(1));
-                        //print(await snapshot.data.getPageHeight(1));
-                        await snapshot.data.setPage(pages ~/ 2);
-                        await snapshot.data.resetZoom(1);
-                        //await snapshot.data.setZoom(3.0);
-                        //print(await snapshot.data.getScreenWidth());
-                      },
-                    );
-                  }
+                                      );
+                                    },
+                                  ))),
+                );
+              }),
+          floatingActionButton: FutureBuilder<PDFViewController>(
+            future: _controller.future,
+            builder: (context, AsyncSnapshot<PDFViewController> snapshot) {
+              if (snapshot.hasData) {
+                return FloatingActionButton.extended(
+                  label: Text("Go to ${pages ~/ 2}"),
+                  onPressed: () async {
+                    //print(await snapshot.data.getZoom());
+                    //print(await snapshot.data.getPageWidth(1));
+                    //print(await snapshot.data.getPageHeight(1));
+                    await snapshot.data.setPage(pages ~/ 2);
+                    await snapshot.data.resetZoom(1);
+                    //await snapshot.data.setZoom(3.0);
+                    //print(await snapshot.data.getScreenWidth());
+                  },
+                );
+              }
 
-                  return Container();
-                },
-              ),
-            );
-          } else {
-            final Completer<PDFViewController> _controller =
+              return Container();
+            },
+          ),
+        );
+      } else {
+        final Completer<PDFViewController> _controller =
             Completer<PDFViewController>();
-            return PDFView(
-              filePath: widget.path,
-              fitEachPage: true,
-              dualPageMode: true,
-              displayAsBook: true,
-              dualPageWithBreak: true,
-              enableSwipe: true,
-              swipeHorizontal: true,
-              autoSpacing: false,
-              pageFling: true,
-              defaultPage: 0,
-              pageSnap: true,
-              backgroundColor: bgcolors.BLACK,
-              onRender: (_pages) {
-                print("OK RENDERED!!!!!");
-                setState(() {
-                  pages = _pages;
-                  isReady = true;
-                });
-              },
-              onError: (error) {
-                setState(() {
-                  errorMessage = error.toString();
-                });
-                print(error.toString());
-              },
-              onPageError: (page, error) {
-                setState(() {
-                  errorMessage = '$page: ${error.toString()}';
-                });
-                print('$page: ${error.toString()}');
-              },
-              onViewCreated: (PDFViewController pdfViewController) {
-                _controller.complete(pdfViewController);
-              },
-              onPageChanged: (int page, int total) {
-                print('page change: $page/$total');
-              },
-            );
-          }
-        });
+        return PDFView(
+          filePath: widget.path,
+          fitEachPage: true,
+          dualPageMode: true,
+          displayAsBook: true,
+          dualPageWithBreak: true,
+          enableSwipe: true,
+          swipeHorizontal: true,
+          autoSpacing: false,
+          pageFling: true,
+          defaultPage: 0,
+          pageSnap: true,
+          backgroundColor: bgcolors.BLACK,
+          onRender: (_pages) {
+            print("OK RENDERED!!!!!");
+            setState(() {
+              pages = _pages;
+              isReady = true;
+            });
+          },
+          onError: (error) {
+            setState(() {
+              errorMessage = error.toString();
+            });
+            print(error.toString());
+          },
+          onPageError: (page, error) {
+            setState(() {
+              errorMessage = '$page: ${error.toString()}';
+            });
+            print('$page: ${error.toString()}');
+          },
+          onViewCreated: (PDFViewController pdfViewController) {
+            _controller.complete(pdfViewController);
+          },
+          onPageChanged: (int page, int total) {
+            print('page change: $page/$total');
+          },
+        );
+      }
+    });
+  }
+
+  void gotopage(index) async {
+    AsyncSnapshot<PDFViewController> snapshot;
+    if (snapshot.hasData) {
+      await snapshot.data.setPage(index);
+      await snapshot.data.resetZoom(1);
+    }
   }
 }
