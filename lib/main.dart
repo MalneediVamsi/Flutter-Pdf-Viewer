@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_fullpdfview/flutter_fullpdfview.dart';
+import 'package:pdf_render/pdf_render_widgets.dart';
 
 void main() => runApp(MyApp());
 
@@ -16,16 +17,10 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   String pathPDF = "";
-  String corruptedPathPDF = "";
 
   @override
   void initState() {
     super.initState();
-    fromAsset('assets/corrupted.pdf', 'corrupted.pdf').then((f) {
-      setState(() {
-        corruptedPathPDF = f.path;
-      });
-    });
     fromAsset('assets/demo.pdf', 'sample.pdf').then((f) {
       setState(() {
         pathPDF = f.path;
@@ -87,18 +82,6 @@ class _MyAppState extends State<MyApp> {
                         );
                       }
                     }),
-                RaisedButton(
-                    child: Text("Open Corrupted PDF"),
-                    onPressed: () {
-                      if (pathPDF != null) {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) =>
-                                  PDFScreen(path: corruptedPathPDF)),
-                        );
-                      }
-                    })
               ],
             );
           },
@@ -122,7 +105,7 @@ class _PDFScreenState extends State<PDFScreen> {
   GlobalKey pdfKey = GlobalKey();
   bool isActive = true;
   double scale = 1.0;
-  double top = 200.0;
+  double top = 10.0;
   double initialLocalFocalPoint;
   @override
   Widget build(BuildContext context) {
@@ -155,7 +138,7 @@ class _PDFScreenState extends State<PDFScreen> {
                         swipeHorizontal: true,
                         autoSpacing: true,
                         pageFling: true,
-                        defaultPage: 1,
+                        defaultPage: 0,
                         pageSnap: true,
                         backgroundColor: bgcolors.BLACK,
                         onRender: (_pages) {
@@ -196,6 +179,38 @@ class _PDFScreenState extends State<PDFScreen> {
                       : Center(child: Text(errorMessage))
                 ],
               ),
+              bottomNavigationBar:  Container(
+                color: Colors.black,
+                padding: EdgeInsets.all(5.0),
+                  height: 100,
+                  child: PdfDocumentLoader(
+                    assetName: 'assets/demo.pdf',
+                    documentBuilder: (context, pdfDocument, pageCount) =>
+                        LayoutBuilder(
+                            builder: (context, constraints) =>
+                                ListView.builder(
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount: pageCount,
+                                  itemBuilder: (context, index) =>
+                                      GestureDetector(
+                                        onTap: (){
+
+                                        },
+                                        child: Container(
+                                            width: 50,
+                                            margin: EdgeInsets.all(5),
+                                            padding: EdgeInsets.all(0),
+                                            color: Colors.black12,
+                                            child: PdfPageView(
+                                              pdfDocument: pdfDocument,
+                                              pageNumber: index + 1,
+                                            ),
+                                        ),
+                                      ),
+                                )
+                        ),
+                  )
+              ),
               floatingActionButton: FutureBuilder<PDFViewController>(
                 future: _controller.future,
                 builder: (context, AsyncSnapshot<PDFViewController> snapshot) {
@@ -203,12 +218,12 @@ class _PDFScreenState extends State<PDFScreen> {
                     return FloatingActionButton.extended(
                       label: Text("Go to ${pages ~/ 2}"),
                       onPressed: () async {
-                        print(await snapshot.data.getZoom());
-                        print(await snapshot.data.getPageWidth(1));
-                        print(await snapshot.data.getPageHeight(1));
+                        //print(await snapshot.data.getZoom());
+                        //print(await snapshot.data.getPageWidth(1));
+                        //print(await snapshot.data.getPageHeight(1));
                         await snapshot.data.setPage(pages ~/ 2);
                         await snapshot.data.resetZoom(1);
-                        await snapshot.data.setZoom(3.0);
+                        //await snapshot.data.setZoom(3.0);
                         //print(await snapshot.data.getScreenWidth());
                       },
                     );
@@ -223,7 +238,7 @@ class _PDFScreenState extends State<PDFScreen> {
             Completer<PDFViewController>();
             return PDFView(
               filePath: widget.path,
-              fitEachPage: false,
+              fitEachPage: true,
               dualPageMode: true,
               displayAsBook: true,
               dualPageWithBreak: true,
@@ -231,7 +246,7 @@ class _PDFScreenState extends State<PDFScreen> {
               swipeHorizontal: true,
               autoSpacing: false,
               pageFling: true,
-              defaultPage: 1,
+              defaultPage: 0,
               pageSnap: true,
               backgroundColor: bgcolors.BLACK,
               onRender: (_pages) {
